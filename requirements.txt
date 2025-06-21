@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+python-multipart
+google-cloud-speech
+azure-cognitiveservices-speech
+boto3
+requests
+pydub
+ffmpeg-python
+python_dotenv
+openai
+google-generativeai
+google-cloud-texttospeech
