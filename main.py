@@ -8,6 +8,10 @@ from text_to_speech.tts_google import tts_google
 from text_to_speech.tts_aws import tts_aws
 from text_to_speech.tts_azure import tts_azure
 from fastapi.responses import FileResponse
+from translators.services.azure_translate import translate_text_azure
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from fastapi import Body 
 import io
 import time
 import os
@@ -93,3 +97,26 @@ async def tts(
 
     except Exception as e:
         return {"error": f"TTS failed: {str(e)}"}
+
+
+@app.post("/translate_service/azure")
+def azure_translate(
+    text: str = Form(...),
+    target_language: str = Form(...),
+    source_language: str | None = Form(None)
+):
+    try:
+        start_time = time.time()
+        translated_text = translate_text_azure(
+            text,
+            to_lang=target_language,
+            from_lang=source_language
+        )
+        latency = time.time() - start_time
+
+        return {
+            "translated_text": translated_text,
+            "latency": latency
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
