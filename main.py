@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from transcribers.google_transcriber import transcribe_google
-from transcribers.azure_transcriber import transcribe_azure
+from transcribers.azure_transcriber import transcribe_azure_fast
 from transcribers.aws_transcriber import transcribe_aws
 from translators.LLMS.openai_translator import translate_text as translate_openai
 from translators.LLMS.gemini_translator import translate_text_gemini
@@ -31,10 +31,12 @@ async def transcribe(
     start_time = time.time()
 
     provider = provider.lower()
+    file_ext = os.path.splitext(file.filename)[1].lower().lstrip(".") 
+
     if provider == "google":
         text = transcribe_google(audio_data, language_code)
-    elif provider == "azure":
-        text = transcribe_azure(audio_data, language_code)
+    elif provider == "azure-fast":
+        text = transcribe_azure_fast(audio_data, language_code, file_type=file_ext)
     elif provider == "aws":
         text = transcribe_aws(audio_data, language_code)
     else:
