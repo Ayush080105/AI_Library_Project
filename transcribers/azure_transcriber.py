@@ -15,23 +15,23 @@ AZURE_REGION = os.getenv("AZURE_REGION")
 def transcribe_azure_fast(audio_bytes: bytes, language_code: str = "en-US", file_type: str = "wav") -> str:
     temp_audio_path = None
     try:
-        # Determine extension and MIME type
+        
         extension = ".mp3" if file_type.lower() == "mp3" else ".wav"
         mime_type = "audio/mpeg" if file_type.lower() == "mp3" else "audio/wav"
 
-        # Save audio to temp file
+        
         with tempfile.NamedTemporaryFile(delete=False, suffix=extension, mode='wb') as f:
             temp_audio_path = f.name
             f.write(audio_bytes)
 
-        # API endpoint and headers
+        
         url = f"https://{AZURE_REGION}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2024-11-15"
         headers = {
             "Ocp-Apim-Subscription-Key": AZURE_SPEECH_KEY,
             "Accept": "application/json"
         }
 
-        # Prepare multipart form
+        
         with open(temp_audio_path, "rb") as audio_file:
             files = [
                 ('audio', (f.name, audio_file, mime_type)),
@@ -45,17 +45,17 @@ def transcribe_azure_fast(audio_bytes: bytes, language_code: str = "en-US", file
 
             response = requests.post(url, headers=headers, files=files)
 
-        # Error response
+        
         if response.status_code != 200:
             return f"Azure Fast Transcription failed: {response.status_code} - {response.text}"
 
         job = response.json()
 
-        # Direct response case (no polling)
+        
         if "combinedPhrases" in job:
             return " ".join([p["text"] for p in job.get("combinedPhrases", [])]) or "Transcription completed but no text found."
 
-        # Polling mode
+        
         if "id" not in job:
             return f"Azure Fast Transcription failed: No 'id' in response: {job}"
 
