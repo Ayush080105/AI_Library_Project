@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from transcribers.google_transcriber import transcribe_google
 from transcribers.azure_transcriber import transcribe_azure_fast
+from transcribers.azure_multilingual import transcribe_azure_fast_multilingual
 from transcribers.aws_transcriber import transcribe_aws
 from translators.LLMS.openai_translator import translate_text as translate_openai
 from translators.LLMS.gemini_translator import translate_text_gemini
@@ -39,6 +40,8 @@ async def transcribe(
         text = transcribe_azure_fast(audio_data, language_code, file_type=file_ext)
     elif provider == "aws":
         text = transcribe_aws(audio_data, language_code)
+    elif provider == "azure-fast-multilingual":
+        text = transcribe_azure_fast_multilingual(audio_data)
     else:
         return {"error": f"Invalid transcription provider: {provider}"}
 
