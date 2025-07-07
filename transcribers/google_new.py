@@ -11,8 +11,7 @@ def convert_to_wav_linear16(input_path: str) -> str:
     return temp_wav.name
 
 def transcribe_streaming_google(audio_path: str, language_code: str = "en-US") -> str:
-    if not audio_path.endswith(".wav"):
-        audio_path = convert_to_wav_linear16(audio_path)
+    audio_path = convert_to_wav_linear16(audio_path)
 
     client = speech.SpeechClient()
 
