@@ -12,6 +12,8 @@ from fastapi.responses import FileResponse
 from translators.services.azure_translate import translate_text_azure
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from transcribers.google_new import transcribe_streaming_google
+import tempfile
 from fastapi import Body 
 import io
 import time
@@ -28,22 +30,42 @@ async def transcribe(
     language_code: str = Form(...),
     file: UploadFile = File(...)
 ):
-    audio_data = await file.read()
-    start_time = time.time()
-
     provider = provider.lower()
-    file_ext = os.path.splitext(file.filename)[1].lower().lstrip(".") 
+    start_time = time.time()
+    file_ext = os.path.splitext(file.filename)[1].lower().lstrip(".")
 
-    if provider == "google":
-        text = transcribe_google(audio_data, language_code)
-    elif provider == "azure-fast":
-        text = transcribe_azure_fast(audio_data, language_code, file_type=file_ext)
-    elif provider == "aws":
-        text = transcribe_aws(audio_data, language_code)
-    elif provider == "azure-fast-multilingual":
-        text = transcribe_azure_fast_multilingual(audio_data)
-    else:
-        return {"error": f"Invalid transcription provider: {provider}"}
+    if file_ext not in ("mp3", "wav"):
+        raise HTTPException(status_code=400, detail="Only MP3 or WAV files are supported.")
+
+    audio_data = await file.read()
+
+    try:
+        if provider == "google-new":
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file_ext}") as temp_audio:
+                temp_audio.write(audio_data)
+                temp_audio_path = temp_audio.name
+
+            text = transcribe_streaming_google(temp_audio_path, language_code)
+
+        elif provider == "google":
+            text=transcribe_google(audio_data,language_code)
+            
+
+        elif provider == "azure-fast":
+            text = transcribe_azure_fast(audio_data, language_code, file_type=file_ext)
+
+        elif provider == "aws":
+            text = transcribe_aws(audio_data, language_code)
+
+        elif provider == "azure-fast-multilingual":
+            text = transcribe_azure_fast_multilingual(audio_data)
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid transcription provider: {provider}")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     latency = time.time() - start_time
     return {"transcription": text, "latency": latency}
@@ -125,3 +147,4 @@ def azure_translate(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
