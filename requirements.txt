@@ -11,3 +11,4 @@ python_dotenv
 openai
 google-generativeai
 google-cloud-texttospeech
+google-cloud-storage

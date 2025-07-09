@@ -148,3 +148,18 @@ def azure_translate(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+from fastapi import FastAPI, UploadFile, File, Query
+from transcribers.subtitle import process_audio_and_generate_srt
+
+
+@app.post("/transcribed/subtitle_file")
+async def subtitle_transcription(
+    file: UploadFile = File(...),
+    language_code: str = Form(...)
+):
+    srt_path = process_audio_and_generate_srt(file.file, language_code)
+    return FileResponse(
+        path=srt_path,
+        media_type="text/plain",
+        filename="transcript.srt"
+    )
