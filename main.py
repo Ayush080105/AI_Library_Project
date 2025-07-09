@@ -13,6 +13,7 @@ from translators.services.azure_translate import translate_text_azure
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from transcribers.google_new import transcribe_streaming_google
+from transcribers.subtitle import process_audio_and_generate_outputs
 import tempfile
 from fastapi import Body 
 import io
@@ -149,7 +150,6 @@ def azure_translate(
         raise HTTPException(status_code=500, detail=str(e))
     
 from fastapi import FastAPI, UploadFile, File, Query
-from transcribers.subtitle import process_audio_and_generate_srt
 
 
 @app.post("/transcribed/subtitle_file")
@@ -157,9 +157,9 @@ async def subtitle_transcription(
     file: UploadFile = File(...),
     language_code: str = Form(...)
 ):
-    srt_path = process_audio_and_generate_srt(file.file, language_code)
+    zip_path = process_audio_and_generate_outputs(file.file, language_code)
     return FileResponse(
-        path=srt_path,
-        media_type="text/plain",
-        filename="transcript.srt"
+        path=zip_path,
+        media_type="application/zip",
+        filename="transcription_outputs.zip"
     )
