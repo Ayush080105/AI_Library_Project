@@ -170,7 +170,7 @@ async def subtitle_transcription(
         filename="transcription_outputs.zip"
     )
 
-from transcribers.openai_subtitlle import transcribe_and_diarize
+from transcribers.pyannote import transcribe_and_diarize
 
 
 import shutil
