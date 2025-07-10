@@ -163,3 +163,31 @@ async def subtitle_transcription(
         media_type="application/zip",
         filename="transcription_outputs.zip"
     )
+
+from transcribers.openai_subtitlle import transcribe_and_diarize
+
+
+import shutil
+
+@app.post("/transcribe_whisper")
+async def upload_and_transcribe(
+    file: UploadFile = File(...),
+    language_code: str = Form(...)
+):
+    input_path = f"temp_{file.filename}"
+    with open(input_path, "wb") as f:
+        f.write(await file.read())
+
+    try:
+        # Pass the language_code to the transcription function
+        srt_file_path = transcribe_and_diarize(input_path, language_code=language_code)
+        return FileResponse(
+            path=srt_file_path,
+            media_type="application/x-subrip",
+            filename=os.path.basename(srt_file_path)
+        )
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        if os.path.exists(input_path):
+            os.remove(input_path)

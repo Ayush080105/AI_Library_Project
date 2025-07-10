@@ -1,14 +1,36 @@
+# Web framework & API
 fastapi
 uvicorn
 python-multipart
-google-cloud-speech
-azure-cognitiveservices-speech
-boto3
 requests
+
+# Audio I/O & conversion
 pydub
 ffmpeg-python
-python_dotenv
-openai
-google-generativeai
+srt
+
+# Environment config
+python-dotenv
+
+# Google Cloud APIs
+google-cloud-speech
 google-cloud-texttospeech
 google-cloud-storage
+
+# Azure TTS/STT
+azure-cognitiveservices-speech
+
+# AWS
+boto3
+
+# Whisper + PyAnnote
+openai-whisper
+torch==2.7.1
+torchaudio==2.7.1
+pyannote.audio==3.3.2
+huggingface-hub
+hf_transfer
+
+# Optional NLP tools
+transformers
+google-generativeai
