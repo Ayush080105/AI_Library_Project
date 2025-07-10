@@ -14,8 +14,14 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from transcribers.google_new import transcribe_streaming_google
 from transcribers.subtitle import process_audio_and_generate_outputs
+
+from fastapi.responses import JSONResponse
+
+from transcribers.whisper import transcribe_with_whisper
+from transcribers.gpt_4o import transcribe_with_gpt_4o
+from transcribers.gpt_4o_mini import transcribe_with_gpt_4o_mini
 import tempfile
-from fastapi import Body 
+from fastapi import Body,Path
 import io
 import time
 import os
@@ -169,7 +175,7 @@ from transcribers.openai_subtitlle import transcribe_and_diarize
 
 import shutil
 
-@app.post("/transcribe_whisper")
+@app.post("/transcribes/pyannote")
 async def upload_and_transcribe(
     file: UploadFile = File(...),
     language_code: str = Form(...)
@@ -179,7 +185,7 @@ async def upload_and_transcribe(
         f.write(await file.read())
 
     try:
-        # Pass the language_code to the transcription function
+        
         srt_file_path = transcribe_and_diarize(input_path, language_code=language_code)
         return FileResponse(
             path=srt_file_path,
@@ -191,3 +197,40 @@ async def upload_and_transcribe(
     finally:
         if os.path.exists(input_path):
             os.remove(input_path)
+
+
+
+
+
+
+@app.post("/transcribe_openai/{provider}")
+async def transcribe_audio(
+    provider: str = Path(..., description="Choose from: whisper, gpt_4o, gpt_4o_mini"),
+    file: UploadFile = File(...),
+    language_code: str = Form("en")
+):
+    if file.content_type not in ["audio/mpeg", "audio/mp3"]:
+        return JSONResponse(status_code=400, content={"error": "Invalid audio format. Please upload an MP3 file."})
+
+    audio_bytes = await file.read()
+
+    try:
+        if provider == "whisper":
+            transcript, latency = transcribe_with_whisper(audio_bytes, language_code)
+        elif provider == "gpt_4o":
+            transcript, latency = transcribe_with_gpt_4o(audio_bytes, language_code)
+        elif provider == "gpt_4o_mini":
+            transcript, latency = transcribe_with_gpt_4o_mini(audio_bytes, language_code)
+        else:
+            return JSONResponse(status_code=400, content={"error": f"Unsupported provider '{provider}'."})
+
+        return {
+            "provider": provider,
+            "transcript": transcript,
+            "latency_seconds": round(latency, 3),
+            "language_code": language_code
+        }
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
